@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Subset
+import wandb
 
 import warnings
 
@@ -41,6 +42,14 @@ def train(
     main_learning_rate,
     main_weight_decay,
 ):
+
+    wandb.init(project="LLF-ViT")
+    wandb.config ={
+        "epochs" : main_num_steps,
+        "batch_size" : main_batch_size,
+        "lr": main_learning_rate
+    }
+
 
     print(dataset_tag)
     
@@ -75,7 +84,7 @@ def train(
         train_dataset,
         batch_size=main_batch_size,
         shuffle=True,
-        num_workers=16,
+        num_workers=2,
         pin_memory=True,
     )
 
@@ -83,7 +92,7 @@ def train(
         valid_dataset,
         batch_size=256,
         shuffle=False,
-        num_workers=16,
+        num_workers=2,
         pin_memory=True,
     )
     
@@ -245,6 +254,7 @@ def train(
         
             writer.add_scalar("loss/b_train", loss_per_sample_b.mean(), step)
             writer.add_scalar("loss/d_train", loss_per_sample_d.mean(), step)
+            wandb.log({"loss_b":loss_per_sample_b.mean(),"loss_d":loss_per_sample_d.mean()})
 
             bias_attr = attr[:, bias_attr_idx]
 
@@ -260,11 +270,14 @@ def train(
                 writer.add_scalar("loss/b_train_aligned", loss_per_sample_b[aligned_mask].mean(), step)
                 writer.add_scalar("loss/d_train_aligned", loss_per_sample_d[aligned_mask].mean(), step)
                 writer.add_scalar('loss_weight/aligned', loss_weight[aligned_mask].mean(), step)
+                wandb.log({"aligned_mask_loss_b":loss_per_sample_b[aligned_mask].mean(),"aligned_mask_loss_d":loss_per_sample_d[aligned_mask].mean(), "loss_weight_aligned":loss_weight[aligned_mask].mean()})
 
             if skewed_mask.any().item():
                 writer.add_scalar("loss/b_train_skewed", loss_per_sample_b[skewed_mask].mean(), step)
                 writer.add_scalar("loss/d_train_skewed", loss_per_sample_d[skewed_mask].mean(), step)
                 writer.add_scalar('loss_weight/skewed', loss_weight[skewed_mask].mean(), step)
+                wandb.log({"skewed_mask_loss_b":loss_per_sample_b[skewed_mask].mean(),"skewed_mask_loss_d":loss_per_sample_d[skewed_mask].mean(), "loss_weight_aligned":loss_weight[skewed_mask].mean()})
+
 
         if step % main_valid_freq == 0:
             valid_attrwise_accs_b = evaluate(model_b, valid_loader)
@@ -301,6 +314,7 @@ def train(
             num_updated_avg = num_updated / main_batch_size / main_valid_freq
             writer.add_scalar("num_updated/all", num_updated_avg, step)
             num_updated = 0
+            wandb.log({"accuracy_b":valid_accs_b,"accuracy_d":valid_accs_d})
 
     os.makedirs(os.path.join(log_dir, "result", main_tag), exist_ok=True)
     result_path = os.path.join(log_dir, "result", main_tag, "result.th")

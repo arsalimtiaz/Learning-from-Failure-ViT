@@ -2,6 +2,7 @@ import os
 import logging
 from sacred import Experiment
 from sacred.observers import MongoObserver
+import torch
 
 ex = Experiment("main")
 logger = logging.getLogger("debias")
@@ -18,7 +19,7 @@ ex.logger = logger
 @ex.config
 def get_config():
     
-    device = 0
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     log_dir = None
     data_dir = None
     
@@ -47,8 +48,8 @@ def get_config():
 
 @ex.named_config
 def server_user():
-    log_dir = "/home/user/workspace/debias/log"
-    data_dir = "/home/user/datasets/debias"
+    log_dir = "./data"
+    data_dir = "./log"
 
 
 # Dataset Configuration
@@ -57,6 +58,18 @@ def server_user():
 def colored_mnist(log_dir):
     dataset_tag = "ColoredMNIST"
     model_tag = "MLP"
+    main_num_steps = 235 * 100
+    target_attr_idx = 0
+    bias_attr_idx = 1
+    main_valid_freq = 235
+    main_tag = "ColoredMNIST"
+    main_batch_size = 256
+    log_dir = os.path.join(log_dir, 'colored_mnist')
+
+@ex.named_config
+def colored_mnist_vit(log_dir):
+    dataset_tag = "ColoredMNIST"
+    model_tag = "ViT"
     main_num_steps = 235 * 100
     target_attr_idx = 0
     bias_attr_idx = 1
