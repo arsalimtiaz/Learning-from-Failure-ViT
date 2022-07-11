@@ -16,13 +16,13 @@ python make_dataset.py with server_user make_target=colored_mnist
 
 ## Training
 
+```
 python train.py with server_user colored_mnist skewed3 severity4
-
-## Training with ViT
-
 ```
+
+## Training with ViT(ColorMNIST)
+
 python train.py with server_user colored_mnist_vit skewed3 severity4
-```
 
 ## Citation
 
