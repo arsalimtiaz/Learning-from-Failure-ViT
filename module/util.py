@@ -1,3 +1,4 @@
+from requests import patch
 import torch.nn as nn
 from module.resnet import resnet20
 from module.mlp import MLP
@@ -28,5 +29,7 @@ def get_model(model_tag, num_classes):
         return MLP(num_classes=num_classes)
     elif model_tag == "ViT":
         return ViT(image_size=3* 28*28,num_classes=num_classes,patch_size=28,dim=100,depth=5,heads = 3, mlp_dim=3)
+    elif model_tag == "CelebA-ViT":
+        return ViT(image=512,num_classes=num_classes,patch_size=28,dim=100,depth=5,heads=3,mlp_dim=3)
     else:
         raise NotImplementedError

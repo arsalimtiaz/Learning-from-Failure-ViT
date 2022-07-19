@@ -106,6 +106,20 @@ def celeba(log_dir, target_attr_idx, bias_attr_idx):
     main_tag = 'CelebA-{}-{}'.format(target_attr_idx, bias_attr_idx)
     log_dir = os.path.join(log_dir, 'celeba')
 
+@ex.named_config
+def celeba_vit(log_dir, target_attr_idx, bias_attr_idx):
+    dataset_tag = 'CelebA'
+    model_tag = 'CelebA-ViT'
+    target_attr_idx = 9
+    bias_attr_idx = 20
+    main_num_steps = 636 * 200
+    main_valid_freq = 636
+    main_batch_size = 256
+    main_learning_rate = 1e-4
+    main_weight_decay = 1e-4
+    main_tag = 'CelebA-{}-{}'.format(target_attr_idx, bias_attr_idx)
+    log_dir = os.path.join(log_dir, 'celeba')
+
 
 @ex.named_config
 def type0(dataset_tag, main_tag):
