@@ -1,0 +1,13 @@
+Experiments done:
+
+Vanilla
+
+MLP-skewed1-severity4
+MLP-skewed2-severity4
+MLP-skewed3-severity4
+MLP-skewed4-severity4
+
+ViT-skewed1-severity4
+ViT-skewed2-severity4
+ViT-skewed3-severity4
+ViT-skewed4-severity4

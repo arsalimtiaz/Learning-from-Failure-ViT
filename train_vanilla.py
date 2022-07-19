@@ -12,6 +12,7 @@ from torchvision import transforms as T
 import torch.nn.functional as F
 
 import warnings
+import wandb
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
@@ -22,6 +23,7 @@ from data.util import get_dataset, IdxDataset, ZippedDataset
 from module.util import get_model
 from util import MultiDimAverageMeter
 
+NUM_WORKERS = 2
 
 @ex.automain
 def train(
@@ -40,6 +42,13 @@ def train(
     main_learning_rate,
     main_weight_decay,
 ):
+
+    wandb.init(project="LLF-ColoredMNIST-Vanilla")
+    wandb.config ={
+        "epochs" : main_num_steps,
+        "batch_size" : main_batch_size,
+        "lr": main_learning_rate
+    }
 
     print(dataset_tag)
 
@@ -75,7 +84,7 @@ def train(
         train_dataset,
         batch_size=main_batch_size,
         shuffle=True,
-        num_workers=16,
+        num_workers=NUM_WORKERS,
         pin_memory=True,
     )
 
@@ -83,7 +92,7 @@ def train(
         valid_dataset,
         batch_size=256,
         shuffle=False,
-        num_workers=16,
+        num_workers=NUM_WORKERS,
         pin_memory=True,
     )
 
@@ -175,7 +184,6 @@ def train(
 
         loss = loss_per_sample.mean()
 
-
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -184,33 +192,41 @@ def train(
         if step % main_log_freq == 0:
             loss = loss.detach().cpu()
             writer.add_scalar("loss/train", loss, step)
+            wandb.log({"loss/train":loss})
+
 
             bias_attr = attr[:, bias_attr_idx]  # oracle
             loss_per_sample = loss_per_sample.detach()
             if (label == bias_attr).any().item():
                 aligned_loss = loss_per_sample[label == bias_attr].mean()
                 writer.add_scalar("loss/train_aligned", aligned_loss, step)
+                wandb.log({"loss/train_aligned":aligned_loss})
 
             if (label != bias_attr).any().item():
                 skewed_loss = loss_per_sample[label != bias_attr].mean()
                 writer.add_scalar("loss/train_skewed", skewed_loss, step)
+                wandb.log({"loss/train_skewed":skewed_loss})
 
         if step % main_valid_freq == 0:
             valid_attrwise_accs = evaluate(model, valid_loader)
             valid_attrwise_accs_list.append(valid_attrwise_accs)
             valid_accs = torch.mean(valid_attrwise_accs)
             writer.add_scalar("acc/valid", valid_accs, step)
+            wandb.log({"acc/valid":valid_accs})
             eye_tsr = torch.eye(num_classes)
             writer.add_scalar(
                 "acc/valid_aligned",
                 valid_attrwise_accs[eye_tsr > 0.0].mean(),
                 step
             )
+            wandb.log({"acc/valid_aligned":valid_attrwise_accs[eye_tsr > 0.0].mean()})
             writer.add_scalar(
                 "acc/valid_skewed",
                 valid_attrwise_accs[eye_tsr == 0.0].mean(),
                 step
             )
+            wandb.log({"acc/valid_skewed":valid_attrwise_accs[eye_tsr == 0.0].mean()})
+
 
     os.makedirs(os.path.join(log_dir, "result", main_tag), exist_ok=True)
     result_path = os.path.join(log_dir, "result", main_tag, "result.th")

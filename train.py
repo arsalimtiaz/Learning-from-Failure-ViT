@@ -25,6 +25,7 @@ from module.util import get_model
 from util import MultiDimAverageMeter, EMA
 from vit_pytorch import ViT
 
+NUM_WORKERS = 2
     
 @ex.automain
 def train(
@@ -85,7 +86,7 @@ def train(
         train_dataset,
         batch_size=main_batch_size,
         shuffle=True,
-        num_workers=2,
+        num_workers=NUM_WORKERS,
         pin_memory=True,
     )
 
@@ -93,7 +94,7 @@ def train(
         valid_dataset,
         batch_size=256,
         shuffle=False,
-        num_workers=2,
+        num_workers=NUM_WORKERS,
         pin_memory=True,
     )
     
