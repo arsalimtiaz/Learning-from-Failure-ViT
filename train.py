@@ -346,7 +346,7 @@ def train(
                 valid_attrwise_accs_d[eye_tsr == 0].mean(),
                 step,
             )
-            wandb.loader({
+            wandb.log({
                 "acc/d_valid_skewed":
                 valid_attrwise_accs_d[eye_tsr == 0].mean()
             })
