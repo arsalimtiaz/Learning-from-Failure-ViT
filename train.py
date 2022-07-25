@@ -45,7 +45,7 @@ def train(
     main_weight_decay,
 ):
 
-    wandb.init(project="LLF-ViT")
+    wandb.init(project="LLF-ColoredMNIST-Debiasing")
     wandb.config ={
         "epochs" : main_num_steps,
         "batch_size" : main_batch_size,
@@ -100,8 +100,8 @@ def train(
     
     # define model and optimizer
     model_b = get_model(model_tag, attr_dims[0]).to(device)
-    # model_d = get_model(model_tag, attr_dims[0]).to(device)
-    model_d = ViT(image_size=3* 28*28,num_classes=num_classes,patch_size=4,dim=10,depth=5,heads=5,mlp_dim=5).to(device)
+    model_d = get_model(model_tag, attr_dims[0]).to(device)
+    # model_d = ViT(image_size=3* 28*28,num_classes=num_classes,patch_size=4,dim=10,depth=5,heads=5,mlp_dim=5).to(device)
     
     if main_optimizer_tag == "SGD":
         optimizer_b = torch.optim.SGD(
@@ -257,7 +257,10 @@ def train(
         
             writer.add_scalar("loss/b_train", loss_per_sample_b.mean(), step)
             writer.add_scalar("loss/d_train", loss_per_sample_d.mean(), step)
-            wandb.log({"loss_b":loss_per_sample_b.mean(),"loss_d":loss_per_sample_d.mean()})
+            wandb.log({
+                "loss/b_train":loss_per_sample_b.mean(),
+                "loss/d_train":loss_per_sample_d.mean()
+                })
 
             bias_attr = attr[:, bias_attr_idx]
 
@@ -268,18 +271,32 @@ def train(
             writer.add_scalar('loss_std/b_ema', sample_loss_ema_b.parameter.std(), step)
             writer.add_scalar('loss_variance/d_ema', sample_loss_ema_d.parameter.var(), step)
             writer.add_scalar('loss_std/d_ema', sample_loss_ema_d.parameter.std(), step)
+            wandb.log({
+                'loss_variance/b_ema': sample_loss_ema_b.parameter.var(),
+                'loss_std/b_ema': sample_loss_ema_b.parameter.std(),
+                'loss_variance/d_ema': sample_loss_ema_d.parameter.var(),
+                'loss_std/d_ema': sample_loss_ema_d.parameter.std()
+            })
 
             if aligned_mask.any().item():
                 writer.add_scalar("loss/b_train_aligned", loss_per_sample_b[aligned_mask].mean(), step)
                 writer.add_scalar("loss/d_train_aligned", loss_per_sample_d[aligned_mask].mean(), step)
                 writer.add_scalar('loss_weight/aligned', loss_weight[aligned_mask].mean(), step)
-                wandb.log({"aligned_mask_loss_b":loss_per_sample_b[aligned_mask].mean(),"aligned_mask_loss_d":loss_per_sample_d[aligned_mask].mean(), "loss_weight_aligned":loss_weight[aligned_mask].mean()})
+                wandb.log({
+                        "loss/b_train_aligned": loss_per_sample_b[aligned_mask].mean(),
+                        "loss/d_train_aligned": loss_per_sample_d[aligned_mask].mean(),
+                        'loss_weight/aligned': loss_weight[aligned_mask].mean()
+                })
 
             if skewed_mask.any().item():
                 writer.add_scalar("loss/b_train_skewed", loss_per_sample_b[skewed_mask].mean(), step)
                 writer.add_scalar("loss/d_train_skewed", loss_per_sample_d[skewed_mask].mean(), step)
                 writer.add_scalar('loss_weight/skewed', loss_weight[skewed_mask].mean(), step)
-                wandb.log({"skewed_mask_loss_b":loss_per_sample_b[skewed_mask].mean(),"skewed_mask_loss_d":loss_per_sample_d[skewed_mask].mean(), "loss_weight_aligned":loss_weight[skewed_mask].mean()})
+                wandb.log({
+                    "loss/b_train_skewed": loss_per_sample_b[skewed_mask].mean(),
+                    "loss/d_train_skewed": loss_per_sample_d[skewed_mask].mean(),
+                    'loss_weight/skewed': loss_weight[skewed_mask].mean()
+                })
 
 
         if step % main_valid_freq == 0:
@@ -290,6 +307,10 @@ def train(
             writer.add_scalar("acc/b_valid", valid_accs_b, step)
             valid_accs_d = torch.mean(valid_attrwise_accs_d)
             writer.add_scalar("acc/d_valid", valid_accs_d, step)
+            wandb.log({
+                "acc/b_valid": valid_accs_b,
+                "acc/d_valid": valid_accs_d
+            })
 
             eye_tsr = torch.eye(attr_dims[0]).long()
             
@@ -298,26 +319,44 @@ def train(
                 valid_attrwise_accs_b[eye_tsr == 1].mean(),
                 step,
             )
+            wandb.log({
+                "acc/b_valid_aligned":
+                valid_attrwise_accs_b[eye_tsr == 1].mean()
+            })
             writer.add_scalar(
                 "acc/b_valid_skewed",
                 valid_attrwise_accs_b[eye_tsr == 0].mean(),
                 step,
             )
+            wandb.log({
+                "acc/b_valid_skewed":
+                valid_attrwise_accs_b[eye_tsr == 0].mean()
+            })
             writer.add_scalar(
                 "acc/d_valid_aligned",
                 valid_attrwise_accs_d[eye_tsr == 1].mean(),
                 step,
             )
+            wandb.log({
+                "acc/d_valid_aligned":
+                valid_attrwise_accs_d[eye_tsr == 1].mean()
+            })
             writer.add_scalar(
                 "acc/d_valid_skewed",
                 valid_attrwise_accs_d[eye_tsr == 0].mean(),
                 step,
             )
+            wandb.loader({
+                "acc/d_valid_skewed":
+                valid_attrwise_accs_d[eye_tsr == 0].mean()
+            })
             
             num_updated_avg = num_updated / main_batch_size / main_valid_freq
             writer.add_scalar("num_updated/all", num_updated_avg, step)
+            wandb.log({
+                "num_updated/all": num_updated_avg
+            })
             num_updated = 0
-            wandb.log({"accuracy_b":valid_accs_b,"accuracy_d":valid_accs_d})
 
     os.makedirs(os.path.join(log_dir, "result", main_tag), exist_ok=True)
     result_path = os.path.join(log_dir, "result", main_tag, "result.th")
