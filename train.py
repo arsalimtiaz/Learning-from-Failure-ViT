@@ -100,8 +100,8 @@ def train(
     
     # define model and optimizer
     model_b = get_model(model_tag, attr_dims[0]).to(device)
-    # model_d = get_model(model_tag, attr_dims[0]).to(device)
-    model_d = ViT(image_size=3* 28*28,num_classes=num_classes,patch_size=4,dim=10,depth=5,heads=5,mlp_dim=5).to(device)
+    model_d = get_model(model_tag, attr_dims[0]).to(device)
+    # model_d = ViT(image_size=3* 28*28,num_classes=num_classes,patch_size=4,dim=10,depth=5,heads=5,mlp_dim=5).to(device)
     
     if main_optimizer_tag == "SGD":
         optimizer_b = torch.optim.SGD(
