@@ -3,3 +3,4 @@ wandb
 .DS_Store
 __pycache__
 data/colored_mnist
+llf-venv
