@@ -45,7 +45,7 @@ def train(
     main_weight_decay,
 ):
 
-    wandb.init(project="LLF-ColoredMNIST-Debiasing")
+    wandb.init(project="LLF-CorruptedCIFAR-Type0-Debiasing")
     wandb.config ={
         "epochs" : main_num_steps,
         "batch_size" : main_batch_size,

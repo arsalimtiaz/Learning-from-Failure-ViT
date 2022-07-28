@@ -43,7 +43,7 @@ def train(
     main_weight_decay,
 ):
 
-    wandb.init(project="LLF-ColoredMNIST-Vanilla")
+    wandb.init(project="LLF-CorruptedCIFAR-Type1-Vanilla")
     wandb.config ={
         "epochs" : main_num_steps,
         "batch_size" : main_batch_size,
