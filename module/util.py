@@ -27,6 +27,8 @@ def get_model(model_tag, num_classes):
     elif model_tag == "MLP":
         return MLP(num_classes=num_classes)
     elif model_tag == "ViT":
-        return ViT(image_size=3* 28*28,num_classes=num_classes,patch_size=28,dim=100,depth=5,heads = 3, mlp_dim=3)
+        return ViT(image_size=3*28*28,num_classes=num_classes,patch_size=28,dim=100,depth=5,heads =3, mlp_dim=3)
+    elif model_tag == "ViT-CIFAR":
+        return ViT(image_size=3*32*32,num_classes=num_classes,patch_size=28,dim=100,depth=5,heads =3, mlp_dim=3)
     else:
         raise NotImplementedError

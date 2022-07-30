@@ -81,7 +81,19 @@ def colored_mnist_vit(log_dir):
 
 @ex.named_config
 def corrupted_cifar10(log_dir):
-    dataset_tag = "CorruptedCIFAR10"
+    dataset_tag = "CorruptedCIFAR10-Type0"
+    model_tag = 'ViT-CIFAR'
+    target_attr_idx = 0
+    bias_attr_idx = 1
+    main_num_steps = 196 * 200
+    main_valid_freq = 196
+    main_batch_size = 256
+    main_tag = "CorruptedCIFAR10"
+    log_dir = os.path.join(log_dir, 'corrupted_cifar')
+
+@ex.named_config
+def corrupted_cifar10_vit(log_dir):
+    dataset_tag = "CorruptedCIFAR10-Type0"
     model_tag = 'ResNet20'
     target_attr_idx = 0
     bias_attr_idx = 1
